@@ -1,0 +1,23 @@
+# resmon-lite configuration — copy to ~/.config/resmon-lite/config.toml
+# All keys are optional; omitted keys use the built-in defaults.
+
+# Polling interval in seconds.
+poll_interval = 2.0
+
+# Utilisation thresholds (percent) applied to CPU %, GPU % and VRAM %.
+util_warn = 50.0   # >= this turns yellow
+util_crit = 75.0   # >= this turns red
+
+# Temperature thresholds (degrees C) applied to CPU and GPU temperatures.
+temp_warn = 75.0
+temp_crit = 90.0
+
+# Status colours.
+color_ok = "#81C784"
+color_warn = "#FFD54F"
+color_crit = "#EF5350"
+
+# Pinned overlay window ("Pin to screen").
+overlay_opacity = 0.7      # starting background alpha, 1.0 solid .. 0.35 faint
+overlay_font_pt = 12.0     # text size in points
+overlay_text_color = "#ffffff"  # base text colour; status colours still apply to values

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=resmon-lite
+Comment=Lightweight CPU/RAM/GPU stats in the system tray
+Exec=resmon-lite
+Terminal=false
+Categories=System;Monitor;
