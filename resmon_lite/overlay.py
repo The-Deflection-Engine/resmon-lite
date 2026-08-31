@@ -30,8 +30,8 @@ gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
 from gi.repository import Gdk, GLib, Gtk  # noqa: E402
 
-# Opacity steps offered by the menu and stepped through with the scroll wheel.
-OPACITY_LEVELS: tuple[float, ...] = (0.35, 0.5, 0.65, 0.8, 1.0)
+# Opacity steps offered by the menu slider and stepped through with the scroll wheel.
+OPACITY_LEVELS: tuple[float, ...] = tuple(round(i / 10, 1) for i in range(1, 11))
 
 _CORNER = 10.0  # background corner radius, px
 _BORDER_ALPHA = 0.16  # hairline around the panel, so it reads on pale pages

@@ -110,7 +110,7 @@ class ResmonLite:
         row("ram")
         menu.append(Gtk.SeparatorMenuItem())
         if not gpus:
-            row("no_gpu", "<i>No AMD GPU detected</i>")
+            row("no_gpu", "<i>No GPU detected</i>")
         for g in gpus:
             name = GLib.markup_escape_text(g.name)
             row(f"gpu{g.index}_head", f"<b>GPU {g.index} \u00b7 {name}</b>")
@@ -123,6 +123,10 @@ class ResmonLite:
         self._pin_item.connect("toggled", self._on_pin_toggled)
         menu.append(self._pin_item)
 
+        # NB: a real GtkScale doesn't work here -- AyatanaAppIndicator menus are
+        # exported to GNOME Shell over dbusmenu, which only understands plain
+        # items/checkboxes/radios/submenus, not embedded custom widgets. Radio
+        # items are the closest thing to a slider dbusmenu can actually render.
         opacity_item = Gtk.MenuItem(label="Overlay opacity")
         submenu = Gtk.Menu()
         current = _nearest_level(self._overlay_opacity())

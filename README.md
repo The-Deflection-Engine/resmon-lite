@@ -52,9 +52,13 @@ Starting opacity, text size and text colour are configurable — see below.
 - AMD GPUs (amdgpu driver). GPU utilisation needs the kernel parameter
   `amdgpu.gpu_busy_percent=1`; if it isn't set, the util column shows `n/a`
   and everything else still works.
+- NVIDIA GPUs need the proprietary driver plus the optional `nvidia` extra
+  (`pip install resmon-lite[nvidia]`), which pulls in `nvidia-ml-py` for
+  NVML. Without it, or without the extra installed, NVIDIA GPUs are just
+  skipped — everything else still works.
 
-Only Python dependency is PyGObject; all metrics come straight from `/proc`
-and sysfs, with no subprocesses spawned per poll.
+Only required Python dependency is PyGObject; metrics come straight from
+`/proc`, sysfs and (for NVIDIA) NVML, with no subprocesses spawned per poll.
 
 ## Run
 
@@ -103,11 +107,12 @@ Optional file at `~/.config/resmon-lite/config.toml` (see
 
 ## Notes & design
 
-- **GPU backend**: AMD only, via amdgpu sysfs
-  (`/sys/class/drm/cardN/device/…`, hwmon for temp/power). Every GPU present
-  is listed automatically, so adding more cards "just works". The card name
-  comes from `lspci` (looked up once at startup), with a small built-in map
-  for very new cards.
+- **GPU backend**: AMD via amdgpu sysfs (`/sys/class/drm/cardN/device/…`,
+  hwmon for temp/power) and NVIDIA via NVML (optional `nvidia-ml-py`
+  dependency). Every GPU present is listed automatically, so mixed AMD +
+  NVIDIA systems and new cards "just work". AMD names come from `lspci`
+  (looked up once at startup, with a small built-in map for very new cards);
+  NVIDIA names come straight from NVML.
 - **CPU temperature**: read from the `k10temp` / `coretemp` hwmon chip.
 - **RAM**: `MemTotal − MemAvailable` from `/proc/meminfo`.
 - **Icon**: drawn with Cairo to a PNG in `~/.cache/resmon-lite/`, rewritten only
@@ -115,5 +120,3 @@ Optional file at `~/.config/resmon-lite/config.toml` (see
 - **Single instance**: resmon-lite owns the D-Bus name `org.resmonlite.App` for
   the session; starting a second copy prints a notice and exits. The name is
   released automatically on crash, so there are no stale lock files.
-- An NVIDIA (NVML) backend is the natural next step if you ever move GPUs;
-  `resmon_lite/gpu.py` isolates all GPU access behind `read_gpus()`.

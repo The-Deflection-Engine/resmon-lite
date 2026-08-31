@@ -1,8 +1,13 @@
-"""AMD GPU metrics from sysfs (amdgpu). No external processes per poll.
+"""GPU metrics: AMD from sysfs (amdgpu), NVIDIA from NVML. No external
+processes per poll.
 
-Utilisation comes from /sys/class/drm/cardN/device/gpu_busy_percent, which
-requires the amdgpu.gpu_busy_percent=1 kernel parameter. If it is missing,
-the field shows "n/a".
+AMD utilisation comes from /sys/class/drm/cardN/device/gpu_busy_percent,
+which requires the amdgpu.gpu_busy_percent=1 kernel parameter. If it is
+missing, the field shows "n/a".
+
+NVIDIA needs the optional `nvidia-ml-py` dependency (`pip install
+resmon-lite[nvidia]`) plus the proprietary driver; if either is absent,
+NVIDIA GPUs are silently skipped rather than crashing the app.
 """
 from __future__ import annotations
 
@@ -13,6 +18,11 @@ import subprocess
 from dataclasses import dataclass
 
 from . import sysfs
+
+try:  # optional: only needed for NVIDIA GPUs
+    import pynvml
+except ImportError:  # pragma: no cover - NVIDIA extra not installed
+    pynvml = None
 
 _DRM_GLOB = "/sys/class/drm/card[0-9]*/device"
 _AMD_VENDOR = "1002"
@@ -130,7 +140,7 @@ def device_names() -> dict[str, str]:
 
 
 def read_gpus(names: dict[str, str] | None = None) -> list[Gpu]:
-    """Read metrics for all AMD GPUs currently present."""
+    """Read metrics for all AMD + NVIDIA GPUs currently present."""
     if names is None:
         names = device_names()
     gpus: list[Gpu] = []
@@ -138,7 +148,86 @@ def read_gpus(names: dict[str, str] | None = None) -> list[Gpu]:
         card = _read_card(dev, names)
         if card is not None:
             gpus.append(card)
+    for i, card in enumerate(_read_nvidia_gpus()):
+        card.index = len(gpus) + i
+        gpus.append(card)
     return gpus
+
+
+# -- NVIDIA (NVML) -----------------------------------------------------------
+
+_nvml_ready: bool | None = None  # None = not attempted yet
+
+
+def _nvml_init() -> bool:
+    """Initialise NVML once; cache whether it worked (no driver = False)."""
+    global _nvml_ready
+    if _nvml_ready is None:
+        try:
+            pynvml.nvmlInit()
+            _nvml_ready = True
+        except pynvml.NVMLError:
+            _nvml_ready = False
+    return _nvml_ready
+
+
+def _read_nvidia_gpus() -> list[Gpu]:
+    """Metrics for all NVIDIA GPUs via NVML, or [] if unavailable."""
+    if pynvml is None or not _nvml_init():
+        return []
+    gpus: list[Gpu] = []
+    try:
+        count = pynvml.nvmlDeviceGetCount()
+    except pynvml.NVMLError:
+        return []
+    for i in range(count):
+        try:
+            handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+            name = pynvml.nvmlDeviceGetName(handle)
+            if isinstance(name, bytes):
+                name = name.decode()
+        except pynvml.NVMLError:
+            continue
+        gpus.append(
+            Gpu(
+                index=i,
+                name=name,
+                busy_percent=_nvml_util(handle),
+                vram_used=_nvml_mem(handle, "used"),
+                vram_total=_nvml_mem(handle, "total"),
+                power_w=_nvml_power(handle),
+                temp_c=_nvml_temp(handle),
+            )
+        )
+    return gpus
+
+
+def _nvml_util(handle) -> float | None:
+    try:
+        return float(pynvml.nvmlDeviceGetUtilizationRates(handle).gpu)
+    except pynvml.NVMLError:
+        return None
+
+
+def _nvml_mem(handle, field: str) -> int | None:
+    try:
+        return int(getattr(pynvml.nvmlDeviceGetMemoryInfo(handle), field))
+    except pynvml.NVMLError:
+        return None
+
+
+def _nvml_power(handle) -> float | None:
+    try:
+        return pynvml.nvmlDeviceGetPowerUsage(handle) / 1000.0
+    except pynvml.NVMLError:
+        return None
+
+
+def _nvml_temp(handle) -> float | None:
+    try:
+        return float(pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU))
+    except pynvml.NVMLError:
+        return None
 
 
 def _read_card(dev: str, names: dict[str, str]) -> Gpu | None:
