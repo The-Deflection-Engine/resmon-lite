@@ -70,7 +70,7 @@ Only required Python dependency is PyGObject; metrics come straight from
 Or install it as a regular command, e.g. straight from GitHub:
 
 ```sh
-pip install --user git+https://github.com/The-Deflection-Engine/resmon-lite.git
+pip install --user git+https://github.com/The-Deflection-Engine/resmon-lite.git@v0.2.0
 resmon-lite
 ```
 
