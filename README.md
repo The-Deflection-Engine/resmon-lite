@@ -78,7 +78,8 @@ resmon-lite
 on your `PATH` (pip warns if it isn't) — add `export PATH="$HOME/.local/bin:$PATH"`
 to your shell rc file if `resmon-lite` isn't found after installing.
 
-(`pipx install git+https://...` works the same way, in its own venv.) For
+(`pipx install git+https://github.com/The-Deflection-Engine/resmon-lite.git@v0.2.0`
+works the same way, in its own venv.) For
 hacking on a local checkout: `pip install --user -e .`.
 
 ## Autostart with the session
