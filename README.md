@@ -53,9 +53,9 @@ Starting opacity, text size and text colour are configurable — see below.
   `amdgpu.gpu_busy_percent=1`; if it isn't set, the util column shows `n/a`
   and everything else still works.
 - NVIDIA GPUs need the proprietary driver plus the optional `nvidia` extra
-  (`pip install resmon-lite[nvidia]`), which pulls in `nvidia-ml-py` for
-  NVML. Without it, or without the extra installed, NVIDIA GPUs are just
-  skipped — everything else still works.
+  (`pip install "resmon-lite[nvidia] @ git+https://github.com/The-Deflection-Engine/resmon-lite.git@v0.2.0"`),
+  which pulls in `nvidia-ml-py` for NVML. Without it, or without the extra
+  installed, NVIDIA GPUs are just skipped — everything else still works.
 
 Only required Python dependency is PyGObject; metrics come straight from
 `/proc`, sysfs and (for NVIDIA) NVML, with no subprocesses spawned per poll.
