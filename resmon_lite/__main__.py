@@ -31,7 +31,7 @@ def _print_once() -> None:
             f"{f(g.busy_percent, '3.0f')}%  {vram}  {f(g.power_w, '4.0f')} W  {f(g.temp_c, '3.0f')}\u00b0C"
         )
     if not gpus:
-        print("GPU   no AMD GPU detected")
+        print("GPU   no GPU detected")
 
 
 def _acquire_single_instance():
