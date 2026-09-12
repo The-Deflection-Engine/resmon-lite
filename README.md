@@ -48,7 +48,11 @@ Starting opacity, text size and text colour are configurable — see below.
 
 - Ubuntu 22.04+ with GNOME (Wayland or X11) — uses the Ayatana AppIndicator,
   already present on stock Ubuntu (`gir1.2-ayatanaappindicator3-0.1`).
-- Python 3.11+ with PyGObject (`python3-gi`, standard on Ubuntu).
+- Python 3.11+ with PyGObject (`python3-gi`, standard on Ubuntu) and
+  `python3-gi-cairo`. The latter is needed for the pinned overlay's translucent
+  background — without it, GTK's `draw` signal can't hand Python a
+  `cairo.Context` (fails silently with a `TypeError` in stderr), so the panel
+  still shows but its opacity control does nothing.
 - AMD GPUs (amdgpu driver). GPU utilisation needs the kernel parameter
   `amdgpu.gpu_busy_percent=1`; if it isn't set, the util column shows `n/a`
   and everything else still works.
