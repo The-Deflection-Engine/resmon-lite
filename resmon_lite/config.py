@@ -19,6 +19,7 @@ class Config:
     # Status colours (hex).
     color_ok: str = "#81C784"
     color_warn: str = "#FFD54F"
+    color_crit: str = "#EF5350"
     # ESP32 display output (see esp32/ for the firmware).
     remote_enabled: bool = False
     remote_transport: str = "wifi"  # "wifi" (UDP) or "usb" (serial)
