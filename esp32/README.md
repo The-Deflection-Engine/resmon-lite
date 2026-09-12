@@ -23,6 +23,9 @@ Display mockups (240x240 PNGs):
 
 All pins are in `src/config.h` — adjust that file to match your wiring.
 
+A typical GC9A01 breakout is labelled 3V3, GND, SDA, SCK, CS, DC/RS,
+RES, LED — power, MOSI, SCK, CS, DC, RST and backlight respectively.
+
 | Function | Pin | Notes |
 |---|---|---|
 | MOSI | 23 | data out |
@@ -64,18 +67,49 @@ The board advertises the mDNS name `resmon.local` — point the host's
 
 ## Build & flash
 
+### PlatformIO
+
 ```sh
 cd esp32
 pio run -t upload    # PlatformIO (pip install platformio)
 ```
 
-Or the Arduino IDE with the `LovyanGFX` and `ArduinoJson` libraries
-installed.
+### Arduino IDE (1.8.x)
+
+One-time setup:
+
+1. **Board support** — File → Preferences → add
+   `https://espressif.github.io/arduino-esp32/package_esp32_index.json`
+   to *Additional URLs for board managers* → OK. Then Tools → Board →
+   Boards Manager → refresh → search `esp32` → install **esp32 by
+   Espressif Systems**.
+2. **Libraries** — Sketch → Include Library → Manage Libraries →
+   install **LovyanGFX** and **ArduinoJson** (WebServer ships with the
+   core).
+
+Every flash:
+
+3. Create a folder (e.g. `Resmon/`), copy all of `esp32/src/` into
+   it, and add an empty `Resmon.ino` file (the IDE requires a .ino
+   entry point; the code lives in the .cpp files). Open the folder
+   in the IDE.
+4. Adjust the pin map in `config.h` to match your wiring.
+5. Tools → Board → **ESP32 Dev Module** (an S3: **ESP32S3 Dev
+   Module**).
+6. Tools → Port → the board's serial port (`/dev/ttyUSB0` classic,
+   `/dev/ttyACM0` S3).
+7. Upload — the toolbar arrow, or File → Upload. If it fails, hold
+   **BOOT**, press **EN/RESET**, release **BOOT**, and upload again.
+
+No Wi-Fi is needed in `config.h` first — provision it via the `Resmon`
+network (see above).
 
 ### USB
 
 - **Classic ESP32**: any USB-serial bridge works; the port shows up as
   `/dev/ttyUSB0` (set `remote_usb_device` in the host config to match).
+  If the port never appears, the bridge chip needs its Linux driver
+  (`cp210x` or `ch341`).
 - **ESP32-S3**: native USB CDC — change `board` in `platformio.ini` to
   `esp32s3` (the port then shows up as `/dev/ttyACM0`).
 
