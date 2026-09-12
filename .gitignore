@@ -20,3 +20,13 @@ __pycache__/
 build/
 dist/
 .venv/
+
+# Debian packaging build output
+debian/.debhelper/
+debian/resmon-lite/
+debian/resmon-lite.debhelper.log
+debian/resmon-lite.substvars
+debian/resmon-lite.*.debhelper
+debian/files
+debian/debhelper-build-stamp
+.pybuild/
