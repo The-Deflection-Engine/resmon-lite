@@ -1,4 +1,4 @@
-resmon-lite (0.2.0) unstable; urgency=medium
+resmon-lite (0.2.0) resolute; urgency=medium
 
   * Initial Debian packaging.
 
