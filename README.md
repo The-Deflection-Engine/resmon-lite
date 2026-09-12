@@ -164,3 +164,36 @@ Optional file at `~/.config/resmon-lite/config.toml` (see
 - **Single instance**: resmon-lite owns the D-Bus name `org.resmonlite.App` for
   the session; starting a second copy prints a notice and exits. The name is
   released automatically on crash, so there are no stale lock files.
+
+## ESP32 display
+
+An optional second output: a 240x240 circular IPS panel (GC9A01) on an
+ESP32, driven over Wi-Fi (UDP) or USB (serial). Each GPU's utilisation
+and VRAM are shown as concentric dials, plus a CPU/RAM page; buttons
+switch pages and change display settings. The tray app keeps working
+exactly as today — the ESP32 is an additional, non-fatal output (an
+absent ESP32 costs at most a few throttled stderr lines).
+
+| GPU page | GPU page (idle) | CPU/RAM page | Settings | Link lost |
+|---|---|---|---|---|
+| ![GPU busy](esp32/mockups/gpu-page-busy.png) | ![GPU idle](esp32/mockups/gpu-page-idle.png) | ![CPU/RAM](esp32/mockups/cpu-ram-page.png) | ![Settings](esp32/mockups/settings-page.png) | ![Link lost](esp32/mockups/link-lost.png) |
+
+Hardware, wiring, buttons and build/flash instructions: see
+[`esp32/README.md`](esp32/README.md) (firmware in `esp32/`, built with
+PlatformIO — Arduino + LovyanGFX + ArduinoJson).
+
+New config keys (all optional, see [`config.example.toml`](config.example.toml)):
+
+| Key | Default | Meaning |
+
+|---|---|---|
+| `remote_enabled` | `false` | send telemetry to the ESP32 |
+| `remote_transport` | `"wifi"` | `"wifi"` (UDP) or `"usb"` (serial) |
+| `remote_host` | `"127.0.0.1"` | ESP32 IP, or `"resmon.local"` (mDNS) |
+| `remote_port` | `8266` | UDP port |
+| `remote_usb_device` | `"/dev/ttyUSB0"` | serial port for `"usb"` |
+| `remote_usb_baud` | `115200` | serial baud rate |
+
+Display settings (backlight, colour mode, auto-advance) are changed on
+the ESP32 itself — with the panel's buttons — and stored in its flash
+(NVS); they are not changed from the host.
