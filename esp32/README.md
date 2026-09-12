@@ -51,11 +51,16 @@ Only two buttons? Set `TWO_BUTTONS 1` in `src/config.h`: B1 = next /
 change, B2 short = previous / move selection, B2 long = open settings /
 exit.
 
-## Wi-Fi
+## Wi-Fi setup (web page)
 
-Fill in `WIFI_SSID` and `WIFI_PASS` in `src/config.h` before flashing.
+Flash the firmware (no need to fill in `config.h` Wi-Fi first). Power
+on; connect a phone or laptop to the open network `Resmon`. Open
+http://192.168.4.1; enter the home SSID + password; optionally adjust
+the display settings; Save. The device reboots and joins the network;
+the `Resmon` network stays available at any time for later changes.
 The board advertises the mDNS name `resmon.local` — point the host's
-`remote_host` at it (or at the board's IP).
+`remote_host` at it (or at the board's IP). `config.h`
+`WIFI_SSID`/`WIFI_PASS` remain the factory fallback.
 
 ## Build & flash
 

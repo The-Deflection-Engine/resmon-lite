@@ -8,6 +8,7 @@
 #include "pages.h"
 #include "buttons.h"
 #include "settings.h"
+#include "web.h"
 
 static WiFiUDP wifi_udp;
 
@@ -106,8 +107,11 @@ void setup() {
   display::init();
   settings::load();
   Serial.begin(SERIAL_BAUD);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  web::init();  // "Resmon" AP + web server come up before the STA attempt
+  if (strlen(settings::ssid()) > 0)
+    WiFi.begin(settings::ssid(), settings::pass());
+  else
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
   MDNS.begin(MDNS_HOST);
   wifi_udp.begin(UDP_PORT);
   buttons::init();
@@ -118,6 +122,7 @@ void setup() {
 }
 
 void loop() {
+  web::poll();
   // 1. UDP.
   int len = wifi_udp.parsePacket();
   if (len > 0) {

@@ -6,6 +6,8 @@ static Preferences prefs;
 static int s_bright = 70;
 static int s_color = 0;
 static int s_auto = 2;
+static char s_ssid[33];
+static char s_pass[64];
 static char s_buf[16];
 
 namespace settings {
@@ -15,6 +17,8 @@ void load() {
   s_bright = prefs.getUChar("bright", 70);
   s_color = prefs.getUChar("color", 0);
   s_auto = prefs.getUChar("auto", 2);
+  prefs.getString("ssid", s_ssid, sizeof(s_ssid));
+  prefs.getString("pass", s_pass, sizeof(s_pass));
   prefs.end();
 }
 
@@ -23,6 +27,8 @@ void save() {
   prefs.putUChar("bright", s_bright);
   prefs.putUChar("color", s_color);
   prefs.putUChar("auto", s_auto);
+  prefs.putString("ssid", s_ssid);
+  prefs.putString("pass", s_pass);
   prefs.end();
 }
 
@@ -49,6 +55,33 @@ int auto_adv_ms() {
     default:
       return 0;
   }
+}
+
+const char* ssid() {
+  return s_ssid;
+}
+
+const char* pass() {
+  return s_pass;
+}
+
+void set_wifi(const char* ssid, const char* pass) {
+  strncpy(s_ssid, ssid, sizeof(s_ssid) - 1);
+  s_ssid[sizeof(s_ssid) - 1] = 0;
+  strncpy(s_pass, pass, sizeof(s_pass) - 1);
+  s_pass[sizeof(s_pass) - 1] = 0;
+}
+
+void set_bright(int v) {
+  s_bright = v < 0 ? 0 : (v > 100 ? 100 : v);
+}
+
+void set_color(int v) {
+  s_color = v < 0 ? 0 : (v > 2 ? 2 : v);
+}
+
+void set_auto(int v) {
+  s_auto = v < 0 ? 0 : (v > 3 ? 3 : v);
 }
 
 const char* cycle(int i) {

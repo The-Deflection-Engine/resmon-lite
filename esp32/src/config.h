@@ -11,9 +11,10 @@
 #define PIN_BTN1 34
 #define PIN_BTN2 35
 #define PIN_BTN3 39
-// Wi-Fi — fill in before flashing
+// Wi-Fi — factory fallback, used only when no credentials are saved via the web page
 #define WIFI_SSID "your-ssid"
 #define WIFI_PASS "your-password"
+#define AP_SSID "Resmon"  // provisioning network, always on, open
 #define MDNS_HOST "resmon"
 #define UDP_PORT 8266
 #define SERIAL_BAUD 115200

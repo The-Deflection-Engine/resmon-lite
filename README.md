@@ -182,6 +182,11 @@ Hardware, wiring, buttons and build/flash instructions: see
 [`esp32/README.md`](esp32/README.md) (firmware in `esp32/`, built with
 PlatformIO — Arduino + LovyanGFX + ArduinoJson).
 
+Wi-Fi is configured via the `Resmon` setup network on first boot:
+connect to it, open http://192.168.4.1, save the home credentials —
+the device reboots and joins the network. The `Resmon` network stays
+available for later changes.
+
 New config keys (all optional, see [`config.example.toml`](config.example.toml)):
 
 | Key | Default | Meaning |
@@ -195,5 +200,6 @@ New config keys (all optional, see [`config.example.toml`](config.example.toml))
 | `remote_usb_baud` | `115200` | serial baud rate |
 
 Display settings (backlight, colour mode, auto-advance) are changed on
-the ESP32 itself — with the panel's buttons — and stored in its flash
+the ESP32 itself — with the panel's buttons or the web settings page
+(http://192.168.4.1 on the `Resmon` network) — and stored in its flash
 (NVS); they are not changed from the host.
