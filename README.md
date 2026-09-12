@@ -190,7 +190,6 @@ available for later changes.
 New config keys (all optional, see [`config.example.toml`](config.example.toml)):
 
 | Key | Default | Meaning |
-
 |---|---|---|
 | `remote_enabled` | `false` | send telemetry to the ESP32 |
 | `remote_transport` | `"wifi"` | `"wifi"` (UDP) or `"usb"` (serial) |

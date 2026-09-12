@@ -14,6 +14,7 @@ static WiFiUDP wifi_udp;
 
 static Telemetry cur;
 static uint32_t last_data = 0;
+static bool has_data = false;
 static uint32_t last_btn = 0;
 static uint32_t last_advance = 0;
 static bool dirty = true;
@@ -57,6 +58,7 @@ static void parse(const char* line) {
   }
   cur = t;
   last_data = millis();
+  has_data = true;
   dirty = true;
 }
 
@@ -162,7 +164,7 @@ void loop() {
     }
   }
   // 5. Link lost / recovered.
-  bool lost = (millis() - last_data > 10000);
+  bool lost = !has_data || (millis() - last_data > 10000);
   if (lost != showing_lost) {
     showing_lost = lost;
     if (lost) in_settings = false;
