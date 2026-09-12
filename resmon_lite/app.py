@@ -15,6 +15,7 @@ from . import sensors  # noqa: E402
 from .config import Config  # noqa: E402
 from .icon import IconWriter  # noqa: E402
 from .overlay import OPACITY_LEVELS, Overlay, _nearest_level  # noqa: E402
+from .remote import Remote  # noqa: E402
 from .state import UIState, load_state, save_state  # noqa: E402
 from .status import Status, classify, colored, mono  # noqa: E402
 
@@ -71,6 +72,7 @@ class ResmonLite:
         }
         self.cpu_reader = sensors.CpuReader()
         self.gpu_names = gpumod.device_names()  # one-time lspci lookup
+        self.remote = Remote(config)
 
         self.icon_path = os.path.join(GLib.get_user_cache_dir(), "resmon-lite", "icon.png")
         self.icons = IconWriter(self.icon_path)
@@ -331,6 +333,7 @@ class ResmonLite:
 
     def _tick(self) -> bool:
         sample = self._read()
+        self.remote.send(sample)
         rows = self._rows_for(sample)
 
         for key, markup, _header in rows:
