@@ -86,11 +86,26 @@ to your shell rc file if `resmon-lite` isn't found after installing.
 works the same way, in its own venv.) For
 hacking on a local checkout: `pip install --user -e .`.
 
-## Debian/Ubuntu package (.deb)
+## Ubuntu package (PPA)
 
-Building it yourself pulls in all the system dependencies (PyGObject, the
-AppIndicator and cairo GObject-introspection bindings) via `apt`, instead of
-you having to track them down by hand:
+The easiest way to install on Ubuntu, and to get updates automatically:
+
+```sh
+sudo add-apt-repository ppa:euan-webster/resmon-lite
+sudo apt update
+sudo apt install resmon-lite
+```
+
+This pulls in all the system dependencies (PyGObject, the AppIndicator and
+cairo GObject-introspection bindings) via `apt` automatically, installs the
+`resmon-lite` command to `/usr/bin`, and the launcher `.desktop` file to
+`/usr/share/applications` (so it shows up in the GNOME app grid too).
+NVIDIA support still needs the `nvidia-ml-py` pip extra separately — see
+[Requirements](#requirements) — since it isn't packaged for Debian/Ubuntu.
+
+### Building the .deb yourself
+
+If you'd rather not add the PPA, the same package builds locally:
 
 ```sh
 sudo apt build-dep .            # or: sudo apt install debhelper-compat dh-python \
@@ -99,16 +114,10 @@ dpkg-buildpackage -us -uc -b
 sudo apt install ../resmon-lite_*_all.deb
 ```
 
-This installs the `resmon-lite` command to `/usr/bin` and the launcher
-`.desktop` file to `/usr/share/applications` (so it shows up in the GNOME
-app grid too). NVIDIA support still needs the `nvidia-ml-py` pip extra
-separately — see [Requirements](#requirements) — since it isn't packaged
-for Debian/Ubuntu.
-
 ## Autostart with the session
 
-If you installed the `.deb`, the launcher and `.desktop` file are already on
-your system, so autostart is just:
+If you installed via the PPA or the `.deb`, the launcher and `.desktop` file
+are already on your system, so autostart is just:
 
 ```sh
 mkdir -p ~/.config/autostart
