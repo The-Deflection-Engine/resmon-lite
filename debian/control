@@ -17,6 +17,7 @@ Depends: ${misc:Depends},
  ${python3:Depends},
  python3-gi,
  python3-gi-cairo,
+ python3-serial,
  gir1.2-gtk-3.0,
  gir1.2-ayatanaappindicator3-0.1
 Description: Lightweight CPU/RAM/GPU stats app for the Ubuntu tray

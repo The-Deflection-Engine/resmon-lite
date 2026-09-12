@@ -21,3 +21,11 @@ color_crit = "#EF5350"
 overlay_opacity = 0.7      # starting background alpha, 1.0 solid .. 0.35 faint
 overlay_font_pt = 12.0     # text size in points
 overlay_text_color = "#ffffff"  # base text colour; status colours still apply to values
+
+# ESP32 display (GC9A01 240x240 circular panel; firmware in esp32/).
+remote_enabled = false
+remote_transport = "wifi"     # "wifi" (UDP) or "usb" (serial)
+remote_host = "127.0.0.1"    # ESP32 IP, or "resmon.local" (mDNS)
+remote_port = 8266
+remote_usb_device = "/dev/ttyUSB0"
+remote_usb_baud = 115200

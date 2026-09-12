@@ -19,7 +19,13 @@ class Config:
     # Status colours (hex).
     color_ok: str = "#81C784"
     color_warn: str = "#FFD54F"
-    color_crit: str = "#EF5350"
+    # ESP32 display output (see esp32/ for the firmware).
+    remote_enabled: bool = False
+    remote_transport: str = "wifi"  # "wifi" (UDP) or "usb" (serial)
+    remote_host: str = "127.0.0.1"  # ESP32 IP, or "resmon.local" (mDNS)
+    remote_port: int = 8266
+    remote_usb_device: str = "/dev/ttyUSB0"
+    remote_usb_baud: int = 115200
     # Pinned overlay window ("Pin to screen"): starting background alpha, where
     # 1.0 is solid and 0.35 is barely there, the text size in points, and the
     # base text colour (hex). Once the user scrolls or picks a level these are

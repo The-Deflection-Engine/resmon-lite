@@ -9,7 +9,7 @@ description = "Lightweight CPU/RAM/GPU stats tray app for Ubuntu (AMD + NVIDIA G
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-dependencies = ["PyGObject>=3.42"]
+dependencies = ["PyGObject>=3.42", "pyserial>=2.9"]
 
 [project.optional-dependencies]
 nvidia = ["nvidia-ml-py>=12"]
