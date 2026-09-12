@@ -30,3 +30,6 @@ debian/resmon-lite.*.debhelper
 debian/files
 debian/debhelper-build-stamp
 .pybuild/
+
+# PlatformIO build output
+esp32/.pio/
