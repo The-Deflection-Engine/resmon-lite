@@ -64,6 +64,11 @@ def _pci_id(dev_dir: str) -> str | None:
     return None
 
 
+def _pci_address(dev_dir: str) -> str:
+    """PCI address of a cardN/device link, e.g. '0000:03:00.0'."""
+    return os.path.basename(os.path.realpath(dev_dir))
+
+
 def _hwmon_dir(dev_dir: str) -> str | None:
     for d in sorted(glob.glob(os.path.join(dev_dir, "hwmon", "*"))):
         if os.path.isdir(d):
@@ -144,9 +149,13 @@ def read_gpus(names: dict[str, str] | None = None) -> list[Gpu]:
     if names is None:
         names = device_names()
     gpus: list[Gpu] = []
-    for dev in sorted(glob.glob(_DRM_GLOB)):
+    # Order by PCI address, not DRM card number: the kernel can probe cards
+    # out of bus order (card0 may be 07:00.0 and card1 03:00.0), whereas
+    # rocm-smi / amd-smi / nvtop number GPUs by bus, so follow them.
+    for dev in sorted(glob.glob(_DRM_GLOB), key=_pci_address):
         card = _read_card(dev, names)
         if card is not None:
+            card.index = len(gpus)
             gpus.append(card)
     for i, card in enumerate(_read_nvidia_gpus()):
         card.index = len(gpus) + i
@@ -237,10 +246,6 @@ def _read_card(dev: str, names: dict[str, str]) -> Gpu | None:
         return None
     if not os.path.exists(os.path.join(dev, "mem_info_vram_used")):
         return None
-    try:
-        index = int(os.path.basename(os.path.dirname(dev)).replace("card", ""))
-    except ValueError:
-        return None
     hwmon = _hwmon_dir(dev)
     busy = sysfs.read_int(os.path.join(dev, "gpu_busy_percent"))
     vram_total = (
@@ -248,7 +253,7 @@ def _read_card(dev: str, names: dict[str, str]) -> Gpu | None:
         or sysfs.read_int(os.path.join(dev, "mem_info_vram_total"))
     )
     return Gpu(
-        index=index,
+        index=0,  # assigned by read_gpus in PCI order
         name=_KNOWN_NAMES.get(pci_id) or names.get(pci_id) or f"AMD GPU {pci_id}",
         busy_percent=float(busy) if busy is not None else None,
         vram_used=sysfs.read_int(os.path.join(dev, "mem_info_vram_used")),
