@@ -76,8 +76,21 @@ def _hwmon_dir(dev_dir: str) -> str | None:
     return None
 
 
-def _gpu_temp_c(hm: str | None) -> float | None:
-    """GPU temperature: prefer junction, then edge, else first available."""
+@dataclass
+class _CardPaths:
+    pci_id: str
+    vram_used: str
+    vram_total: tuple[str, str]
+    busy: str
+    power: tuple[str, ...]
+    temp: str | None
+
+
+_card_cache: dict[str, _CardPaths | None] = {}
+
+
+def _resolve_temp_sensor(hm: str | None) -> str | None:
+    """Find best GPU temp sensor path (prefer junction, then edge, else first)."""
     if hm is None:
         return None
     sensors = sorted(glob.glob(os.path.join(hm, "temp*_input")))
@@ -92,14 +105,21 @@ def _gpu_temp_c(hm: str | None) -> float | None:
         for f in sensors:
             label_file = os.path.basename(f).replace("_input", "_label")
             if labels.get(label_file, "") == wanted:
-                v = sysfs.read_int(f)
-                if v is not None:
-                    return v / 1000.0
+                if sysfs.read_int(f) is not None:
+                    return f
     for f in sensors:
-        v = sysfs.read_int(f)
-        if v is not None:
-            return v / 1000.0
+        if sysfs.read_int(f) is not None:
+            return f
     return None
+
+
+def _gpu_temp_c(hm: str | None) -> float | None:
+    """GPU temperature: prefer junction, then edge, else first available."""
+    sensor = _resolve_temp_sensor(hm)
+    if sensor is None:
+        return None
+    v = sysfs.read_int(sensor)
+    return v / 1000.0 if v is not None else None
 
 
 def _gpu_power_w(hm: str | None) -> float | None:
@@ -239,25 +259,62 @@ def _nvml_temp(handle) -> float | None:
         return None
 
 
-def _read_card(dev: str, names: dict[str, str]) -> Gpu | None:
-    """Metrics for one /sys/class/drm/cardN/device, or None if not an AMD GPU."""
+def _get_card_paths(dev: str) -> _CardPaths | None:
+    if dev in _card_cache:
+        return _card_cache[dev]
     pci_id = _pci_id(dev)
     if not pci_id or not pci_id.startswith(_AMD_VENDOR + ":"):
+        _card_cache[dev] = None
         return None
-    if not os.path.exists(os.path.join(dev, "mem_info_vram_used")):
+    vram_used = os.path.join(dev, "mem_info_vram_used")
+    if not os.path.exists(vram_used):
+        _card_cache[dev] = None
         return None
     hwmon = _hwmon_dir(dev)
-    busy = sysfs.read_int(os.path.join(dev, "gpu_busy_percent"))
-    vram_total = (
-        sysfs.read_int(os.path.join(dev, "mem_info_vis_vram_total"))
-        or sysfs.read_int(os.path.join(dev, "mem_info_vram_total"))
+    power_paths = (
+        tuple(os.path.join(hwmon, n) for n in ("power1_average", "power1_input"))
+        if hwmon
+        else ()
     )
+    paths = _CardPaths(
+        pci_id=pci_id,
+        vram_used=vram_used,
+        vram_total=(
+            os.path.join(dev, "mem_info_vis_vram_total"),
+            os.path.join(dev, "mem_info_vram_total"),
+        ),
+        busy=os.path.join(dev, "gpu_busy_percent"),
+        power=power_paths,
+        temp=_resolve_temp_sensor(hwmon),
+    )
+    _card_cache[dev] = paths
+    return paths
+
+
+def _read_card(dev: str, names: dict[str, str]) -> Gpu | None:
+    """Metrics for one /sys/class/drm/cardN/device, or None if not an AMD GPU."""
+    paths = _get_card_paths(dev)
+    if paths is None:
+        return None
+    vram_used = sysfs.read_int(paths.vram_used)
+    if vram_used is None:
+        _card_cache.pop(dev, None)
+        return None
+    busy = sysfs.read_int(paths.busy)
+    vram_total = sysfs.read_int(paths.vram_total[0]) or sysfs.read_int(paths.vram_total[1])
+    power_w = None
+    for p in paths.power:
+        v = sysfs.read_int(p)
+        if v is not None:
+            power_w = v / 1e6
+            break
+    temp_v = sysfs.read_int(paths.temp) if paths.temp else None
     return Gpu(
         index=0,  # assigned by read_gpus in PCI order
-        name=_KNOWN_NAMES.get(pci_id) or names.get(pci_id) or f"AMD GPU {pci_id}",
+        name=_KNOWN_NAMES.get(paths.pci_id) or names.get(paths.pci_id) or f"AMD GPU {paths.pci_id}",
         busy_percent=float(busy) if busy is not None else None,
-        vram_used=sysfs.read_int(os.path.join(dev, "mem_info_vram_used")),
+        vram_used=vram_used,
         vram_total=vram_total,
-        power_w=_gpu_power_w(hwmon),
-        temp_c=_gpu_temp_c(hwmon),
+        power_w=power_w,
+        temp_c=temp_v / 1000.0 if temp_v is not None else None,
     )

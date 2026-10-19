@@ -69,8 +69,20 @@ def read_ram() -> tuple[int | None, int | None]:
     return max(0, total - available), total
 
 
+_cpu_temp_path: str | None | bool = False  # False = not resolved yet
+
+
 def read_cpu_temp_c() -> float | None:
     """CPU package temperature from k10temp / coretemp / cpu_thermal hwmon."""
+    global _cpu_temp_path
+    if _cpu_temp_path is not False:
+        if _cpu_temp_path is None:
+            return None
+        raw = sysfs.read_int(_cpu_temp_path)
+        if raw is not None:
+            return raw / 1000.0
+        _cpu_temp_path = False  # sensor disappeared; re-probe below
+
     for chip in sorted(glob.glob(_HWMON_GLOB)):
         try:
             with open(os.path.join(chip, "name")) as f:
@@ -79,7 +91,10 @@ def read_cpu_temp_c() -> float | None:
             continue
         if name not in _CPU_CHIP_NAMES:
             continue
-        raw = sysfs.read_int(os.path.join(chip, "temp1_input"))
+        path = os.path.join(chip, "temp1_input")
+        raw = sysfs.read_int(path)
         if raw is not None:
+            _cpu_temp_path = path
             return raw / 1000.0
+    _cpu_temp_path = None
     return None

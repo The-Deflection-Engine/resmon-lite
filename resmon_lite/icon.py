@@ -79,6 +79,19 @@ def _decode_png(png: bytes) -> tuple[int, int, list[tuple[int, int, int, int]]]:
     return w, h, px
 
 
+def _fill_top(frac: float) -> int:
+    """Top y-coordinate (in pixels) of a bar's coloured fill for `frac` (0..1).
+
+    Snapped to 2px steps on the 44x44 canvas (1px at the ~22px panel size) so
+    idle 1-3% jitter does not rewrite the PNG and force GNOME Shell to reload it.
+    """
+    frac = max(0.0, min(1.0, frac or 0.0))
+    baseline_top = _SIZE - _BOTTOM - _BASELINE
+    plot_h = baseline_top - _TOP
+    fill_h = _MIN_FILL + round(frac * (plot_h - _MIN_FILL) / 2) * 2
+    return int(baseline_top - fill_h)
+
+
 def render_png(bars: Sequence[tuple[float, Status | None]], colors: dict[Status, str]) -> bytes:
     """Render the level meter. Each bar is (fraction 0..1, status or None)."""
     size = _SIZE
@@ -97,12 +110,10 @@ def render_png(bars: Sequence[tuple[float, Status | None]], colors: dict[Status,
     left, right = _MARGIN_X, size - _MARGIN_X
     top, bottom = _TOP, size - _BOTTOM
     baseline_top = bottom - _BASELINE
-    plot_h = baseline_top - top
     step = (right - left) / n
     bar_w = max(2.0, step * 0.8)  # thick: the icon renders at ~22px in the panel
 
     for i, (frac, status) in enumerate(bars):
-        frac = max(0.0, min(1.0, frac or 0.0))
         x0 = int(left + i * step + (step - bar_w) / 2)
         x1 = max(x0 + 1, min(right, int(x0 + bar_w)))
         if status is None:
@@ -110,8 +121,7 @@ def render_png(bars: Sequence[tuple[float, Status | None]], colors: dict[Status,
             continue
         fill = _brighten(_hex_to_rgb(colors[status]))
         rect(x0, top, x1, baseline_top, _track(fill))  # dimmed track behind the fill
-        fill_h = _MIN_FILL + frac * (plot_h - _MIN_FILL)
-        rect(x0, int(baseline_top - fill_h), x1, baseline_top, fill)
+        rect(x0, _fill_top(frac), x1, baseline_top, fill)
 
     # Ground line under the bars: ties them together into one chart silhouette.
     rect(left, baseline_top, right, bottom, _BASE_COLOR)
@@ -119,7 +129,7 @@ def render_png(bars: Sequence[tuple[float, Status | None]], colors: dict[Status,
 
 
 class IconWriter:
-    """Writes the icon PNG to disk, only when its content actually changes.
+    """Writes the icon PNG to disk, only when its rendered pixels actually change.
 
     Alternates between two file paths on each change: the shell only reloads
     an appindicator icon when the D-Bus icon property changes, so writing the
@@ -134,14 +144,19 @@ class IconWriter:
         self._key: tuple | None = None
 
     def update(self, bars: Sequence[tuple[float, Status | None]], colors: dict[Status, str]) -> str | None:
-        """Render if the bars changed; return the new icon path, else None."""
-        key = tuple((round(frac, 2), status.value if status else None) for frac, status in bars)
+        """Render if the visible bar pixels/colours changed; return new path, else None."""
+        capped = list(bars)[:_MAX_BARS]
+        key = tuple(
+            (_fill_top(frac), status.value if status else None)
+            for frac, status in capped
+        )
         if key == self._key:
             return None
         self._idx ^= 1
         self.path = self._paths[self._idx]
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         with open(self.path, "wb") as f:
-            f.write(render_png(bars, colors))
+            f.write(render_png(capped, colors))
         self._key = key
         return self.path
+

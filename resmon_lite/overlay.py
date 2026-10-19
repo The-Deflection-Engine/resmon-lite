@@ -149,13 +149,15 @@ class Overlay:
 
     def _render(self) -> None:
         rows = self._pending
-        if not rows:
+        if not rows or rows == self._rows:
             return
         if [header for _, header in rows] != [header for _, header in self._rows]:
             self._rebuild(rows)
         else:
-            for label, (markup, _) in zip(self._labels, rows):
-                label.set_markup(markup)
+            for label, (markup, _), (old_markup, _) in zip(self._labels, rows, self._rows):
+                if markup != old_markup:
+                    label.set_markup(markup)
+            self._rows = list(rows)
         self.window.queue_draw()
 
     def _make_box(self, spacing: int) -> Gtk.Box:

@@ -87,6 +87,8 @@ class ResmonLite:
         # hides it from the top bar.
         self.indicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         self._labels: dict[str, Gtk.Label] = {}
+        self._prev_row_markup: dict[str, str] = {}
+        self._prev_title: str | None = None
         self._gpu_ids: tuple[int, ...] | None = None
         self._menu_ready = False  # suppress item signals during _build_menu
         self._build_menu([])
@@ -96,6 +98,7 @@ class ResmonLite:
     def _build_menu(self, gpus: list[gpumod.Gpu]) -> None:
         menu = Gtk.Menu()
         self._labels = {}
+        self._prev_row_markup = {}
         self._menu_ready = False  # set_active() below must not fire handlers
 
         def row(key: str, markup: str = "") -> None:
@@ -338,14 +341,18 @@ class ResmonLite:
 
         for key, markup, _header in rows:
             label = self._labels.get(key)
-            if label is not None:
+            if label is not None and self._prev_row_markup.get(key) != markup:
                 label.set_markup(markup)
+                self._prev_row_markup[key] = markup
         overlay_rows = [(markup, header) for _key, markup, header in rows]
         if self.overlay is not None:
             self.overlay.update(overlay_rows)
 
         bars, tip = self._icon_bars_and_tip(sample)
-        self.indicator.set_title(" \u00b7 ".join(tip) if tip else "resmon-lite")
+        title = " \u00b7 ".join(tip) if tip else "resmon-lite"
+        if title != self._prev_title:
+            self.indicator.set_title(title)
+            self._prev_title = title
         new_icon = self.icons.update(bars, self.colors)
         if new_icon is not None:
             self.indicator.set_icon(new_icon)
