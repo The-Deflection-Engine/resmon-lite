@@ -20,13 +20,13 @@ Depends: ${misc:Depends},
  python3-serial,
  gir1.2-gtk-3.0,
  gir1.2-ayatanaappindicator3-0.1
+Suggests: python3-pynvml
 Description: Lightweight CPU/RAM/GPU stats app for the Ubuntu tray
  resmon-lite shows CPU percent, RAM used/total, and per-GPU utilisation,
  VRAM, power draw and temperature in the system tray, colour-coded as
  values climb. A "Pin to screen" tray option opens the same stats as a
  small always-on-top, translucent panel you can leave on the desktop.
  .
- Supports AMD GPUs out of the box via the amdgpu driver. NVIDIA GPU
- support needs the optional nvidia-ml-py Python package, which is not
- packaged for Debian/Ubuntu; install it separately with pip if you have
- an NVIDIA GPU (see the README in /usr/share/doc/resmon-lite/).
+ Supports AMD GPUs out of the box via the amdgpu driver. NVIDIA GPUs
+ additionally need the proprietary driver and python3-pynvml (the NVML
+ bindings); without them NVIDIA GPUs are simply not shown.

@@ -56,10 +56,11 @@ Starting opacity, text size and text colour are configurable — see below.
 - AMD GPUs (amdgpu driver). GPU utilisation needs the kernel parameter
   `amdgpu.gpu_busy_percent=1`; if it isn't set, the util column shows `n/a`
   and everything else still works.
-- NVIDIA GPUs need the proprietary driver plus the optional `nvidia` extra
-  (`pip install "resmon-lite[nvidia] @ git+https://github.com/The-Deflection-Engine/resmon-lite.git@v0.2.0"`),
-  which pulls in `nvidia-ml-py` for NVML. Without it, or without the extra
-  installed, NVIDIA GPUs are just skipped — everything else still works.
+- NVIDIA GPUs need the proprietary driver plus the NVML Python bindings:
+  `sudo apt install python3-pynvml` (or, for a pip install, the optional
+  `nvidia` extra: `pip install "resmon-lite[nvidia] @ git+https://github.com/The-Deflection-Engine/resmon-lite.git@v0.2.0"`,
+  which pulls in `nvidia-ml-py`). Without them, or with no NVIDIA card
+  present, NVIDIA GPUs are just skipped — everything else still works.
 
 Only required Python dependency is PyGObject; metrics come straight from
 `/proc`, sysfs and (for NVIDIA) NVML, with no subprocesses spawned per poll.
@@ -100,8 +101,9 @@ This pulls in all the system dependencies (PyGObject, the AppIndicator and
 cairo GObject-introspection bindings) via `apt` automatically, installs the
 `resmon-lite` command to `/usr/bin`, and the launcher `.desktop` file to
 `/usr/share/applications` (so it shows up in the GNOME app grid too).
-NVIDIA support still needs the `nvidia-ml-py` pip extra separately — see
-[Requirements](#requirements) — since it isn't packaged for Debian/Ubuntu.
+NVIDIA support additionally needs `sudo apt install python3-pynvml` (listed
+as a suggested package, so it isn't pulled onto AMD-only machines) — see
+[Requirements](#requirements).
 
 ### Building the .deb yourself
 
