@@ -40,6 +40,7 @@ _KNOWN_NAMES = {
 class Gpu:
     index: int
     name: str
+    bus: str | None = None  # PCI address, e.g. "0000:12:00.0"
     busy_percent: float | None = None
     vram_used: int | None = None
     vram_total: int | None = None
@@ -164,8 +165,23 @@ def device_names() -> dict[str, str]:
     return {pci_id: name for pci_id, name in by_slot.values() if name}
 
 
-def read_gpus(names: dict[str, str] | None = None) -> list[Gpu]:
-    """Read metrics for all AMD + NVIDIA GPUs currently present."""
+def is_hidden(g: Gpu, patterns: list[str]) -> bool:
+    """True if `g` matches a `hide_gpus` entry: a PCI address (with or without
+    the "0000:" domain) or a case-insensitive substring of the name."""
+    bus = (g.bus or "").lower()
+    name = g.name.lower()
+    for p in patterns:
+        p = p.strip().lower()
+        if p and (p == bus or p == bus.partition(":")[2] or p in name):
+            return True
+    return False
+
+
+def read_gpus(names: dict[str, str] | None = None, hide: list[str] | None = None) -> list[Gpu]:
+    """Read metrics for all AMD + NVIDIA GPUs currently present.
+
+    GPUs matching `hide` are dropped after numbering, so the rest keep the
+    same index whether or not anything is hidden."""
     if names is None:
         names = device_names()
     gpus: list[Gpu] = []
@@ -180,6 +196,8 @@ def read_gpus(names: dict[str, str] | None = None) -> list[Gpu]:
     for i, card in enumerate(_read_nvidia_gpus()):
         card.index = len(gpus) + i
         gpus.append(card)
+    if hide:
+        gpus = [g for g in gpus if not is_hidden(g, hide)]
     return gpus
 
 
@@ -221,6 +239,7 @@ def _read_nvidia_gpus() -> list[Gpu]:
             Gpu(
                 index=i,
                 name=name,
+                bus=_nvml_bus(handle),
                 busy_percent=_nvml_util(handle),
                 vram_used=_nvml_mem(handle, "used"),
                 vram_total=_nvml_mem(handle, "total"),
@@ -229,6 +248,18 @@ def _read_nvidia_gpus() -> list[Gpu]:
             )
         )
     return gpus
+
+
+def _nvml_bus(handle) -> str | None:
+    """PCI address in sysfs form: NVML's "00000000:0A:00.0" -> "0000:0a:00.0"."""
+    try:
+        bus_id = pynvml.nvmlDeviceGetPciInfo(handle).busId
+    except pynvml.NVMLError:
+        return None
+    if isinstance(bus_id, bytes):
+        bus_id = bus_id.decode()
+    domain, rest = bus_id.lower().split(":", 1)
+    return f"{int(domain, 16):04x}:{rest}"
 
 
 def _nvml_util(handle) -> float | None:
@@ -312,6 +343,7 @@ def _read_card(dev: str, names: dict[str, str]) -> Gpu | None:
     return Gpu(
         index=0,  # assigned by read_gpus in PCI order
         name=_KNOWN_NAMES.get(paths.pci_id) or names.get(paths.pci_id) or f"AMD GPU {paths.pci_id}",
+        bus=_pci_address(dev),
         busy_percent=float(busy) if busy is not None else None,
         vram_used=vram_used,
         vram_total=vram_total,

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 import tomllib
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 
 
 @dataclass
@@ -20,6 +20,10 @@ class Config:
     color_ok: str = "#81C784"
     color_warn: str = "#FFD54F"
     color_crit: str = "#EF5350"
+    # GPUs to leave out of every view: PCI addresses ("12:00.0") and/or
+    # case-insensitive name substrings ("Raphael"). `resmon-lite --print`
+    # lists each GPU's name and address.
+    hide_gpus: list[str] = field(default_factory=list)
     # ESP32 display output (see esp32/ for the firmware).
     remote_enabled: bool = False
     remote_transport: str = "wifi"  # "wifi" (UDP) or "usb" (serial)
@@ -52,4 +56,6 @@ def load_config(path: str | None = None) -> Config:
             data = tomllib.load(f)
     valid = {f.name for f in fields(Config)}
     kwargs = {k: v for k, v in data.items() if k in valid}
+    if isinstance(kwargs.get("hide_gpus"), str):  # allow a single bare string
+        kwargs["hide_gpus"] = [kwargs["hide_gpus"]]
     return Config(**kwargs)

@@ -160,7 +160,7 @@ class ResmonLite:
         if tuple(g.index for g in gpus) != self._gpu_ids:
             # GPU set changed (new card / driver reload): refresh names.
             self.gpu_names = gpumod.device_names()
-            gpus = gpumod.read_gpus(self.gpu_names)
+            gpus = gpumod.read_gpus(self.gpu_names, self.config.hide_gpus)
             self._build_menu(gpus)
         return gpus
 
@@ -240,7 +240,7 @@ class ResmonLite:
         cpu_pct = self.cpu_reader.read_percent()
         cpu_temp = sensors.read_cpu_temp_c()
         ram_used, ram_total = sensors.read_ram()
-        gpus = self._sync_menu(gpumod.read_gpus(self.gpu_names))
+        gpus = self._sync_menu(gpumod.read_gpus(self.gpu_names, self.config.hide_gpus))
         return Sample(
             cpu_pct=cpu_pct,
             cpu_temp=cpu_temp,

@@ -147,6 +147,7 @@ Optional file at `~/.config/resmon-lite/config.toml` (see
 | `util_warn` / `util_crit` | `50` / `75` | % thresholds (CPU, GPU, VRAM) for yellow / red |
 | `temp_warn` / `temp_crit` | `75` / `90` | °C thresholds for yellow / red |
 | `color_ok` / `color_warn` / `color_crit` | green/amber/red | hex colours |
+| `hide_gpus` | `[]` | GPUs to hide (e.g. an iGPU): PCI addresses like `"12:00.0"` and/or name substrings; `resmon-lite --print` lists both |
 | `overlay_opacity` | `0.7` | starting background alpha of the pinned overlay (scroll wheel overrides) |
 | `overlay_font_pt` | `12.0` | text size in the pinned overlay, points |
 | `overlay_text_color` | `#ffffff` | base text colour of the pinned overlay (hex); status colours still apply to values |

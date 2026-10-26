@@ -17,6 +17,11 @@ color_ok = "#81C784"
 color_warn = "#FFD54F"
 color_crit = "#EF5350"
 
+# GPUs to leave out of the tray, overlay and ESP32 display. Each entry is a PCI
+# address ("12:00.0") or a case-insensitive name substring ("Raphael");
+# `resmon-lite --print` shows both for every GPU. Other GPUs keep their numbers.
+hide_gpus = []             # e.g. ["12:00.0"] to hide an iGPU
+
 # Pinned overlay window ("Pin to screen").
 overlay_opacity = 0.7      # starting background alpha, 1.0 solid .. 0.35 faint
 overlay_font_pt = 12.0     # text size in points

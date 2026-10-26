@@ -5,7 +5,7 @@ import argparse
 import sys
 
 
-def _print_once() -> None:
+def _print_once(hide: list[str]) -> None:
     """Print a single reading to stdout (for debugging / cron-style use)."""
     import time
 
@@ -25,10 +25,12 @@ def _print_once() -> None:
     if ram_used is not None and ram_total:
         print(f"RAM   {ram_used / 2**30:5.1f}/{ram_total / 2**30:5.1f} GiB")
     for g in gpus:
+        tag = "  [hidden]" if gpu.is_hidden(g, hide) else ""
         vram = f"{g.vram_used / 2**30:5.1f}/{g.vram_total / 2**30:5.1f} GiB" if g.vram_used is not None and g.vram_total else "n/a"
         print(
             f"GPU {g.index}  {g.name}: "
             f"{f(g.busy_percent, '3.0f')}%  {vram}  {f(g.power_w, '4.0f')} W  {f(g.temp_c, '3.0f')}\u00b0C"
+            f"  ({g.bus or 'bus n/a'}){tag}"
         )
     if not gpus:
         print("GPU   no GPU detected")
@@ -96,7 +98,7 @@ def main() -> None:
     config = load_config()
 
     if args.print:
-        _print_once()
+        _print_once(config.hide_gpus)
         return
 
     _prepare_display_environment()
